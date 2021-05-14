@@ -1,0 +1,14 @@
+#!/bin/bash
+
+function gw() {
+	local root_level
+	root_level=$(git rev-parse --show-toplevel 2>/dev/null)
+
+	if [[ -n $root_level && -f "$root_level/gradlew" ]]; then
+		root_level="$root_level/gradlew"
+	else
+		root_level=$(command -v gradle)
+	fi
+
+	"$root_level" "$@"
+}
