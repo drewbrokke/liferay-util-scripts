@@ -10,5 +10,5 @@ function gw() {
 		root_level=$(command -v gradle)
 	fi
 
-	"$root_level" "$@"
+	"$root_level" --console=rich "$@"
 }
