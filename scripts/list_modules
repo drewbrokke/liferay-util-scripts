@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Exclude any files that are inside a 'src' folder since we only want module roots
+# Exclude any files that are inside a 'samples' folder since those are probably not true sources
+
+# List all *.bnd files from project root
+# List all *build.xml files from project root
+# List all *pom.xml files from project root
+filters=(
+	':!:**/src/**'
+	':!:**/samples/**'
+	':!:portal-web/test/**'
+
+	'*.bnd'
+	'*build.gradle'
+	'*build.xml'
+	'*client-extension.yaml'
+	'*package.json'
+	'*pom.xml'
+	'*settings.gradle'
+)
+git -C "$(git rev-parse --show-toplevel)" ls-files -- "${filters[@]}" |
+
+# Strip the filename, leaving just the directory name
+# 	This is WAY faster than using "dirname"
+#
+# Strip the trailing forward-slash
+# Delete any empty lines
+sed -E \
+	-e 's,[^/]*$,,g' \
+	-e 's,/$,,g' \
+	-e '/^$/d' |
+
+# Gets rid of any duplicates in case a module has more than one *.bnd file
+sort -u
