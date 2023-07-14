@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# uses fd for file searching (https://github.com/sharkdp/fd)
+
+REPO_NAME="$(git config remote.origin.url)"
+
+HEADER_STRING="<C-o> Open result on Github
+<C-y> Copy result Github link
+<Enter> Open result in primary editor
+<A-Enter> Open result in secondary editor
+"
+
+if [ -z "${FDF_MAIN_EDITOR_COMMAND}" ]
+then
+	FDF_MAIN_EDITOR_COMMAND="execute-silent(subl {1})"
+fi
+if [ -z "${FDF_SECONDARY_EDITOR_COMMAND}" ]
+then
+	FDF_SECONDARY_EDITOR_COMMAND="execute-silent(idea {1})"
+
+	# FDF_SECONDARY_EDITOR_COMMAND="become(nvim +{2} {1})"
+fi
+
+# Fields are: 1: path
+
+fd "$@" |
+	fzf \
+		--bind="ctrl-o:execute-silent(gh browse -R '${REPO_NAME}' {1})" \
+		--bind="ctrl-y:execute(echo 'Copying link to {1}...' && gh browse -R '${REPO_NAME}' --no-browser {1} | tr -d '\n' | pbcopy)" \
+		--bind="enter:${FDF_MAIN_EDITOR_COMMAND}" \
+		--bind="alt-enter:${FDF_SECONDARY_EDITOR_COMMAND}" \
+		--bind="ctrl-space:accept" \
+		\
+		--exit-0 \
+		--header-first \
+		--header="$HEADER_STRING" \
+		--info="inline" \
+		--layout=reverse \
+		--no-mouse \
+		--preview="bat --color=always {1} 2>/dev/null || exa --all --long --header --icons --sort=type {1}" \
+		--preview-window="down:70%" \
+		--tiebreak=index \
+	;
