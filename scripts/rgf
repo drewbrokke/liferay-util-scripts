@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# Requires:
+# rg (ripgrep, to perform searches) https://github.com/search?utf8=%E2%9C%93&q=ripgrep
+# fzf (to display the fuzzy finding interface and handle keybindings) https://github.com/junegunn/fzf
+# bat (to preview files) https://github.com/sharkdp/bat
+# gh (github cli, to open files on Github or copy Github urls) https://github.com/cli/cli
+
+# Fields are: 1: path, 2: line number, 3: column number, 4: match content
+COMMAND=(rg --vimgrep "$@")
+# COMMAND=(git grep --column "$@")
+
+# I asked ChatGPT: "How do I render a bash array to a string and preserve quotes?"
+printf -v RELOAD_COMMAND "%q " "${COMMAND[@]}"
+
+FZF_ARGS=(
+	--delimiter=":"
+	--exit-0
+	--info="inline"
+	--layout=reverse
+	--no-mouse
+	--preview="bat --color=always --highlight-line='{2}' --theme=1337 {1}"
+	--preview-window="down:70%,+{2},~3"
+	--tiebreak=index
+	--nth="1,4.."
+	--with-nth="1,2,3,4.."
+)
+HEADER_LINES=()
+
+#
+# Build up the key bindings and the header
+#
+
+SEPARATOR="  |  "
+
+EDITOR_HEADER_LINE=""
+if [ -z "${RGF_MAIN_EDITOR_COMMAND}" ]
+then
+	RGF_MAIN_EDITOR_COMMAND="execute-silent(subl {1}:{2}:{3})"
+fi
+
+FZF_ARGS+=(--bind="enter:${RGF_MAIN_EDITOR_COMMAND}")
+EDITOR_HEADER_LINE+="<Enter> Open result in primary editor"
+
+if [ -z "${RGF_SECONDARY_EDITOR_COMMAND}" ]
+then
+	RGF_SECONDARY_EDITOR_COMMAND="execute-silent(idea --line {2} {1})"
+
+	# RGF_SECONDARY_EDITOR_COMMAND="become(nvim +{2} {1})"
+	# RGF_SECONDARY_EDITOR_COMMAND="execute(nvim +{2} {1})"
+fi
+
+EDITOR_HEADER_LINE+="${SEPARATOR}"
+
+FZF_ARGS+=(--bind="alt-enter:${RGF_SECONDARY_EDITOR_COMMAND}")
+EDITOR_HEADER_LINE+="<A-Enter> Open result in secondary editor"
+
+HEADER_LINES+=("${EDITOR_HEADER_LINE}")
+
+REPO_NAME="$(git config remote.upstream.url)"
+if [ -n "${REPO_NAME}" ]
+then
+	GITHUB_HEADER_LINE=""
+
+	FZF_ARGS+=(--bind="ctrl-o:execute-silent(gh browse -R '${REPO_NAME}' {1}:{2})")
+	GITHUB_HEADER_LINE+="<C-o> Open result on Github"
+
+	GITHUB_HEADER_LINE+="${SEPARATOR}"
+
+	FZF_ARGS+=(--bind="ctrl-y:execute(echo 'Copying link to {1}:{2}...' && gh browse -R '${REPO_NAME}' --no-browser {1}:{2} | tr -d '\n' | pbcopy)")
+	GITHUB_HEADER_LINE+="<C-y> Copy result Github link"
+
+	HEADER_LINES+=("${GITHUB_HEADER_LINE}")
+fi
+
+FZF_ARGS+=(--bind="ctrl-r:reload(${RELOAD_COMMAND})")
+HEADER_LINES+=("<C-r> Refresh results")
+
+if [ "${#HEADER_LINES[@]}" -gt 1 ]
+then
+	newline=$'\n'
+
+	for headerLine in "${HEADER_LINES[@]}"
+	do
+		HEADER_STRING+="${headerLine}${newline}"
+	done
+
+	FZF_ARGS+=(--header-first)
+	FZF_ARGS+=(--header="$HEADER_STRING")
+fi
+
+#
+# Go!
+#
+
+"${COMMAND[@]}" | fzf "${FZF_ARGS[@]}"
