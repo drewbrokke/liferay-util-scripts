@@ -25,22 +25,19 @@ FZF_ARGS=(
 	--nth="1,4.."
 	--with-nth="1,2,3,4.."
 )
-HEADER_LINES=()
+HELP_LINES=()
 
 #
 # Build up the key bindings and the header
 #
 
-SEPARATOR="  |  "
-
-EDITOR_HEADER_LINE=""
 if [ -z "${RGF_MAIN_EDITOR_COMMAND}" ]
 then
 	RGF_MAIN_EDITOR_COMMAND="execute-silent(subl {1}:{2}:{3})"
 fi
 
 FZF_ARGS+=(--bind="enter:${RGF_MAIN_EDITOR_COMMAND}")
-EDITOR_HEADER_LINE+="<Enter> Open result in primary editor"
+HELP_LINES+=("<Enter> Open result in primary editor")
 
 if [ -z "${RGF_SECONDARY_EDITOR_COMMAND}" ]
 then
@@ -50,43 +47,41 @@ then
 	# RGF_SECONDARY_EDITOR_COMMAND="execute(nvim +{2} {1})"
 fi
 
-EDITOR_HEADER_LINE+="${SEPARATOR}"
 
 FZF_ARGS+=(--bind="alt-enter:${RGF_SECONDARY_EDITOR_COMMAND}")
-EDITOR_HEADER_LINE+="<A-Enter> Open result in secondary editor"
-
-HEADER_LINES+=("${EDITOR_HEADER_LINE}")
+HELP_LINES+=("<Alt-Enter> Open result in secondary editor")
 
 REPO_NAME="$(git config remote.upstream.url)"
 if [ -n "${REPO_NAME}" ]
 then
-	GITHUB_HEADER_LINE=""
+	HELP_LINES+=("")
 
-	FZF_ARGS+=(--bind="ctrl-o:execute-silent(gh browse -R '${REPO_NAME}' {1}:{2})")
-	GITHUB_HEADER_LINE+="<C-o> Open result on Github"
+	BASE_DIR="$(git rev-parse --show-prefix)"
 
-	GITHUB_HEADER_LINE+="${SEPARATOR}"
+	FZF_ARGS+=(--bind="ctrl-o:execute-silent(gh browse -R '${REPO_NAME}' ${BASE_DIR}{1}:{2})")
+	HELP_LINES+=("<Control-o> Open result on Github")
 
-	FZF_ARGS+=(--bind="ctrl-y:execute(echo 'Copying link to {1}:{2}...' && gh browse -R '${REPO_NAME}' --no-browser {1}:{2} | tr -d '\n' | pbcopy)")
-	GITHUB_HEADER_LINE+="<C-y> Copy result Github link"
 
-	HEADER_LINES+=("${GITHUB_HEADER_LINE}")
+	FZF_ARGS+=(--bind="ctrl-y:execute(echo 'Copying link to {1}:{2}...' && gh browse -R '${REPO_NAME}' --no-browser ${BASE_DIR}{1}:{2} | tr -d '\n' | pbcopy)")
+	HELP_LINES+=("<Control-y> Copy result Github link")
 fi
 
 FZF_ARGS+=(--bind="ctrl-r:reload(${RELOAD_COMMAND})")
-HEADER_LINES+=("<C-r> Refresh results")
+HELP_LINES+=("<Control-r> Refresh results")
 
-if [ "${#HEADER_LINES[@]}" -gt 1 ]
+if [ "${#HELP_LINES[@]}" -gt 1 ]
 then
 	newline=$'\n'
 
-	for headerLine in "${HEADER_LINES[@]}"
+	for headerLine in "${HELP_LINES[@]}"
 	do
-		HEADER_STRING+="${headerLine}${newline}"
+		HELP_STRING+="${headerLine}${newline}"
 	done
 
 	FZF_ARGS+=(--header-first)
-	FZF_ARGS+=(--header="$HEADER_STRING")
+	FZF_ARGS+=(--header="<Control-h> Show help")
+
+	FZF_ARGS+=(--bind="ctrl-h:execute(echo '$HELP_STRING' | less)")
 fi
 
 #
