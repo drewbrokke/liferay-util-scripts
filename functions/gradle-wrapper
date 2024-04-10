@@ -1,14 +1,20 @@
 #!/bin/bash
 
 function gw() {
-	local root_level
-	root_level=$(git rev-parse --show-toplevel 2>/dev/null)
+	local dir="."
 
-	if [[ -n $root_level && -f "$root_level/gradlew" ]]; then
-		root_level="$root_level/gradlew"
-	else
-		root_level=$(command -v gradle)
-	fi
+	while [[ -d "${dir}" ]]; do
+		if [[ -x "${dir}/gradlew" ]]; then
+			echo "Using Gradle wrapper at $(realpath ${dir})"
 
-	"$root_level" "$@"
+			"${dir}/gradlew" "$@"
+
+			return
+		fi
+
+		dir="${dir}/.."
+	done
+
+	echo "Using global Gradle executable"
+	gradle "$@"
 }
