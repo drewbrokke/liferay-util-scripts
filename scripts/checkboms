@@ -1,21 +1,18 @@
 #!/bin/bash
 
 # Make sure we're in a workspace
-if [ ! -f settings.gradle ]
-then
+if [ ! -f settings.gradle ]; then
 	echo "Must be run from the root of a Liferay workspace"
 	exit 1
 fi
 
-if ! grep --silent 'classpath group: "com.liferay", name: "com.liferay.gradle.plugins.workspace", version:' settings.gradle &>/dev/null
-then
+if ! grep --silent 'classpath group: "com.liferay", name: "com.liferay.gradle.plugins.workspace", version:' settings.gradle &>/dev/null; then
 	echo "Must be run from the root of a Liferay workspace"
 	exit 1
 fi
 
 # Make sure jq is installed
-if ! command -v jq &>/dev/null
-then
+if ! command -v jq &>/dev/null; then
 	echo "jq not found. Check here for install instructions: https://jqlang.github.io/jq/download/"
 	exit 1
 fi
@@ -24,8 +21,7 @@ fi
 output_file="${1?Please pass in a name for the output file}"
 
 # Make sure it's a file and not a directory
-if [ -d ${output_file} ]
-then
+if [ -d ${output_file} ]; then
 	echo "${output_file} is a directory"
 	exit 1
 fi
@@ -37,7 +33,7 @@ function _writeCSV() {
 	reason="$3"
 
 	printf "%s\t%s\t%s\n" "${releaseKey}" "${status}" "${reason}"
-	printf "%s,%s,%s\n" "${releaseKey}" "${status}" "${reason}" >> ${output_file}
+	printf "%s,%s,%s\n" "${releaseKey}" "${status}" "${reason}" >>${output_file}
 }
 
 function _fail() {
@@ -58,14 +54,14 @@ _writeCSV "Release Key" "Status" "Reason"
 
 items=($(
 	curl -s https://releases.liferay.com/releases.json |
-	jq '.[] | pick(.releaseKey, .targetPlatformVersion, .url)' --compact-output
+		jq '.[] | pick(.releaseKey, .targetPlatformVersion, .url)' --compact-output
 ))
 
 count="${#items[@]}"
 
 for obj in "${items[@]}"; do
 	echo "Remaining items: ${count}"
-	count=$((count-1))
+	count=$((count - 1))
 
 	releaseKey="$(echo ${obj} | jq -r '.releaseKey')"
 	url="$(echo ${obj} | jq -r '.url')"
@@ -73,14 +69,12 @@ for obj in "${items[@]}"; do
 	release_properties_url="$url/release.properties"
 
 	release_properties="$(curl -s -m 5 ${release_properties_url})"
-	if [ -z "${release_properties}" ]
-	then
+	if [ -z "${release_properties}" ]; then
 		_fail "${releaseKey}" "Could not get release properties after 5 seconds"
 		continue
 	fi
 
-	if echo "${release_properties}" | grep "404 Not Found" &>/dev/null
-	then
+	if echo "${release_properties}" | grep "404 Not Found" &>/dev/null; then
 		_fail "${releaseKey}" "No release.properties file exists"
 		continue
 	fi
@@ -90,21 +84,18 @@ for obj in "${items[@]}"; do
 			grep target.platform.version |
 			sed 's/.*=//g'
 	)"
-	if [ -z ${target_platform_version} ]
-	then
+	if [ -z ${target_platform_version} ]; then
 		_fail "${releaseKey}" "No target platform version defined in release.properties"
 		continue
 	fi
 
 	inlineTargetPlatformVersion="$(echo ${obj} | jq -r '.targetPlatformVersion')"
-	if [ ${inlineTargetPlatformVersion} != ${target_platform_version} ]
-	then
+	if [ ${inlineTargetPlatformVersion} != ${target_platform_version} ]; then
 		_fail "${releaseKey}" "Inline and properties target platform versions do not match: ${inlineTargetPlatformVersion} <> ${target_platform_version}"
 		continue
 	fi
 
-	if ./gradlew dependencyManagement -Pliferay.workspace.target.platform.version="${target_platform_version}" &>/dev/null
-	then
+	if ./gradlew dependencyManagement -Pliferay.workspace.target.platform.version="${target_platform_version}" &>/dev/null; then
 		_pass "${releaseKey}"
 	else
 		_fail "${releaseKey}" "No BOM available"
