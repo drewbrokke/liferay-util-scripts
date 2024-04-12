@@ -55,16 +55,22 @@ function _pass() {
 	_writeCSV "${releaseKey}" "PASSED" ""
 }
 
-# Write CSV header row
-_writeCSV "Release Key" "Status" "Reason"
+releases_url="https://releases.liferay.com/releases.json"
 
+echo "Waiting on ${releases_url}..."
+
+# Read releases.json into an array
 items=()
 while IFS='' read -r line; do
 	items+=("$line")
-done < <(curl -s https://releases.liferay.com/releases.json | jq '.[]' --compact-output)
+done < <(curl -s "${releases_url}" | jq '.[]' --compact-output)
+
+# Write CSV header row
+_writeCSV "Release Key" "Status" "Reason"
 
 count="${#items[@]}"
 
+# Iterate releases
 for obj in "${items[@]}"; do
 	echo "Remaining items: ${count}"
 	count=$((count - 1))
