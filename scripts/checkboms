@@ -20,9 +20,15 @@ fi
 # Make sure there's a file to write to
 output_file="${1?Please pass in a name for the output file}"
 
-# Make sure it's a file and not a directory
+# Make sure it's not a directory
 if [ -d "${output_file}" ]; then
 	echo "${output_file} is a directory"
+	exit 1
+fi
+
+# Make sure it doesn't have content
+if [ -s "${output_file}" ]; then
+	echo "${output_file} already has content"
 	exit 1
 fi
 
