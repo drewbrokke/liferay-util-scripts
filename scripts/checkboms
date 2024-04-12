@@ -21,7 +21,7 @@ fi
 output_file="${1?Please pass in a name for the output file}"
 
 # Make sure it's a file and not a directory
-if [ -d ${output_file} ]; then
+if [ -d "${output_file}" ]; then
 	echo "${output_file} is a directory"
 	exit 1
 fi
@@ -33,7 +33,7 @@ function _writeCSV() {
 	reason="$3"
 
 	printf "%s\t%s\t%s\n" "${releaseKey}" "${status}" "${reason}"
-	printf "%s,%s,%s\n" "${releaseKey}" "${status}" "${reason}" >>${output_file}
+	printf "%s,%s,%s\n" "${releaseKey}" "${status}" "${reason}" >>"${output_file}"
 }
 
 function _fail() {
@@ -52,10 +52,10 @@ function _pass() {
 # Write CSV header row
 _writeCSV "Release Key" "Status" "Reason"
 
-items=($(
-	curl -s https://releases.liferay.com/releases.json |
-		jq '.[] | pick(.releaseKey, .targetPlatformVersion, .url)' --compact-output
-))
+items=()
+while IFS='' read -r line; do
+	items+=("$line")
+done < <(curl -s https://releases.liferay.com/releases.json | jq '.[]' --compact-output)
 
 count="${#items[@]}"
 
@@ -63,12 +63,12 @@ for obj in "${items[@]}"; do
 	echo "Remaining items: ${count}"
 	count=$((count - 1))
 
-	releaseKey="$(echo ${obj} | jq -r '.releaseKey')"
-	url="$(echo ${obj} | jq -r '.url')"
+	releaseKey="$(echo "${obj}" | jq -r '.releaseKey')"
+	url="$(echo "${obj}" | jq -r '.url')"
 
 	release_properties_url="$url/release.properties"
 
-	release_properties="$(curl -s -m 5 ${release_properties_url})"
+	release_properties="$(curl -s -m 5 "${release_properties_url}")"
 	if [ -z "${release_properties}" ]; then
 		_fail "${releaseKey}" "Could not get release properties after 5 seconds"
 		continue
@@ -84,13 +84,13 @@ for obj in "${items[@]}"; do
 			grep target.platform.version |
 			sed 's/.*=//g'
 	)"
-	if [ -z ${target_platform_version} ]; then
+	if [ -z "${target_platform_version}" ]; then
 		_fail "${releaseKey}" "No target platform version defined in release.properties"
 		continue
 	fi
 
-	inlineTargetPlatformVersion="$(echo ${obj} | jq -r '.targetPlatformVersion')"
-	if [ ${inlineTargetPlatformVersion} != ${target_platform_version} ]; then
+	inlineTargetPlatformVersion="$(echo "${obj}" | jq -r '.targetPlatformVersion')"
+	if [ "${inlineTargetPlatformVersion}" != "${target_platform_version}" ]; then
 		_fail "${releaseKey}" "Inline and properties target platform versions do not match: ${inlineTargetPlatformVersion} <> ${target_platform_version}"
 		continue
 	fi
