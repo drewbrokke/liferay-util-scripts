@@ -13,6 +13,13 @@ then
 	exit 1
 fi
 
+# Make sure jq is installed
+if ! command -v jq &>/dev/null
+then
+	echo "jq not found. Check here for install instructions: https://jqlang.github.io/jq/download/"
+	exit 1
+fi
+
 # Make sure there's a file to write to
 output_file="${1?Please pass in a name for the output file}"
 
