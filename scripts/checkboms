@@ -30,11 +30,6 @@ then
 	exit 1
 fi
 
-# Prevents splitting on spaces inside of quotes
-original="${IFS}"
-IFS=$'\n'
-trap 'IFS="${original}"' EXIT
-
 # Helper functions
 function _writeCSV() {
 	releaseKey="$1"
@@ -61,7 +56,10 @@ function _pass() {
 # Write CSV header row
 _writeCSV "Release Key" "Status" "Reason"
 
-items=($(curl -s https://releases.liferay.com/releases.json | jq '.[]' --compact-output))
+items=($(
+	curl -s https://releases.liferay.com/releases.json |
+	jq '.[] | pick(.releaseKey, .targetPlatformVersion, .url)' --compact-output
+))
 
 count="${#items[@]}"
 
