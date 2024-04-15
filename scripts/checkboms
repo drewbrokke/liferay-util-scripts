@@ -28,8 +28,16 @@ fi
 
 # Make sure it doesn't have content
 if [ -s "${output_file}" ]; then
-	echo "${output_file} already has content"
-	exit 1
+	echo "Output file '${output_file}' already has content"
+
+	read -n 1 -p "Overwrite it? (y/N) " -r
+
+	if [ "${REPLY}" == "y" ]; then
+		rm "${output_file}"
+		echo ""
+	else
+		exit 1
+	fi
 fi
 
 # Helper functions
