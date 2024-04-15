@@ -38,7 +38,9 @@ function _writeCSV() {
 	status="$2"
 	reason="$3"
 
-	printf "%s\t%s\t%s\n" "${releaseKey}" "${status}" "${reason}"
+	_pad=25
+
+	printf "%-${_pad}s%-${_pad}s%s\n" "${releaseKey}" "${status}" "${reason}"
 	printf "%s,%s,%s\n" "${releaseKey}" "${status}" "${reason}" >>"${output_file}"
 }
 
@@ -72,6 +74,7 @@ count="${#items[@]}"
 
 # Iterate releases
 for obj in "${items[@]}"; do
+	echo ""
 	echo "Remaining items: ${count}"
 	count=$((count - 1))
 
