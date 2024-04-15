@@ -1,11 +1,6 @@
 #!/bin/bash
 
 # Make sure we're in a workspace
-if [ ! -f settings.gradle ]; then
-	echo "Must be run from the root of a Liferay workspace"
-	exit 1
-fi
-
 if ! grep --silent 'classpath group: "com.liferay", name: "com.liferay.gradle.plugins.workspace", version:' settings.gradle &>/dev/null; then
 	echo "Must be run from the root of a Liferay workspace"
 	exit 1
