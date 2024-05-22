@@ -51,7 +51,7 @@ fi
 FZF_ARGS+=(--bind="alt-enter:${RGF_SECONDARY_EDITOR_COMMAND}")
 HELP_LINES+=("<Alt-Enter> Open result in secondary editor")
 
-REPO_NAME="$(git config remote.upstream.url)"
+REPO_NAME="$(git config remote.upstream.url || git config remote.origin.url)"
 if [ -n "${REPO_NAME}" ]
 then
 	HELP_LINES+=("")
