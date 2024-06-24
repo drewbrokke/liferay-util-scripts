@@ -1,0 +1,46 @@
+#!/bin/bash
+
+from_commit="${1?Which commit should we start from? (exclusive)}"
+old_ticket_number="${2?What\'s the old ticket number?}"
+new_ticket_number="${3?What\'s the new ticket number?}"
+new_branch_name="${4?What\'s the new branch name?}"
+
+function say() {
+	echo ""
+	echo ">>>>>>> $*"
+	echo ""
+}
+
+# this only matters if you're on MacOS and are using the gnu-utils
+
+_SED_CMD="sed"
+if command -v gsed &>/dev/null; then
+	_SED_CMD="gsed"
+fi
+
+# test_string="foo-one-three"
+# echo "${test_string//${old_ticket_number}/${new_ticket_number}}"
+
+patches_dir=$(mktemp -d "${TMPDIR:-/tmp/}$(basename "$0").XXXXXXXXXXXX")
+trap 'rm -rf "${patches_dir}"' EXIT
+
+say "making patches"
+git format-patch --filename-max-length=128 -o "${patches_dir}" "${from_commit}.."
+
+say "replacing ticket number in patch contents"
+"${_SED_CMD}" -i "s/${old_ticket_number}/${new_ticket_number}/g" "${patches_dir}"/*.patch
+
+say "replacing ticket number in patch file names"
+for file in "${patches_dir}"/*.patch
+do
+	# echo "${file}" "${file/${old_ticket_number}/${new_ticket_number}}"
+	mv "${file}" "${file//${old_ticket_number}/${new_ticket_number}}"
+done
+
+say "checking out new branch"
+git checkout -b "${new_branch_name}" "${from_commit}"
+
+say "applying shiny new patches to shiny new branch"
+git am "${patches_dir}"/* || git am --abort
+
+say "new branch at: '${new_branch_name}'"
