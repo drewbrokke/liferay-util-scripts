@@ -1,0 +1,76 @@
+#!/bin/bash
+
+STARTUP_APPS=(
+	Obsidian
+	"Brave Browser"
+	"Sublime Merge"
+	# TaskPaper
+	# Things3
+	# SelfControl
+)
+STARTUP_COMMANDS=(
+	open
+	sync
+)
+
+function cmd_open() {
+	for app in "${STARTUP_APPS[@]}"; do
+		echo "Hello $app"
+		open --background -a "$app" &
+	done
+}
+
+function cmd_sync() {
+	gh repo sync drewbrokke/liferay-portal --source liferay/liferay-portal
+	gh repo sync liferay-devtools/liferay-portal --source liferay/liferay-portal
+
+	(
+		cd "$LIFERAY/liferay-portal" || exit
+		git fetch origin master
+		git fetch devtools master
+		git fetch upstream
+		git fetch brian
+		git fetch
+	)
+}
+
+EE_BRANCHES=(
+	master
+	release-2023.q3
+	release-2023.q4
+	release-2024.q1
+	release-2024.q2
+	7.3.x
+)
+# This can be accessed from the command line with "startup sync-ee"
+# shellcheck disable=SC2317
+function cmd_sync-ee() {
+	for branch in "${EE_BRANCHES[@]}"; do
+		gh repo sync drewbrokke/liferay-portal-ee \
+			--branch ${branch} \
+			--source liferay/liferay-portal-ee ||
+		echo "Could not sync branch ${branch}"
+	done
+
+	(
+		cd "$LIFERAY/liferay-portal-ee" || exit
+		git fetch origin master
+		git fetch upstream
+	)
+}
+
+function cmd_connect-to-vpn() {
+	# shellcheck disable=SC2317
+	m vpn start 9F145C81-E15C-4E0F-AB4B-DF9DB33FBFE4
+}
+
+if [ $# -gt 0 ]; then
+	command="${1}"
+
+	"cmd_${command}"
+else
+	for command in "${STARTUP_COMMANDS[@]}"; do
+		echo "Running command: ${command}"
+		"cmd_${command}"
+	done
+fi
