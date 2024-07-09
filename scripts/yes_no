@@ -1,0 +1,45 @@
+#!/bin/bash
+
+FLIP_DEFAULT=0
+
+while getopts "f" FLAGS; do
+	case $FLAGS in
+	f) FLIP_DEFAULT=1 ;;
+	*) exit 1 ;;
+	esac
+done
+shift $((OPTIND - 1))
+
+MESSAGE="$1"
+
+_DEFAULT_VALUE="n"
+_OPTIONS="y/N"
+if [ "${FLIP_DEFAULT}" -gt 0 ]; then
+	_DEFAULT_VALUE="y"
+	_OPTIONS="Y/n"
+fi
+
+# -n 1 							accept 1 character
+# -p "${MESSAGE} (y/N): "		the visible prompt
+# -r 							backslash does not escape. Not sure why I have this one
+read \
+	-n 1 \
+	-p "${MESSAGE} (${_OPTIONS}): " \
+	-r \
+	;
+
+echo
+
+if [ "${_DEFAULT_VALUE}" == "y" ]; then
+	if [ "${REPLY}" != "n" ] && [ "${REPLY}" != "N" ]; then
+		exit 0
+	fi
+	exit 1
+fi
+
+if [ "${_DEFAULT_VALUE}" == "n" ]; then
+	if [ "${REPLY}" != "y" ] && [ "${REPLY}" != "Y" ]; then
+		exit 1
+	fi
+	exit 0
+fi
