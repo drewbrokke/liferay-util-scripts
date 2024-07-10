@@ -33,7 +33,7 @@ function cmd_sync() {
 	gh repo sync liferay-devtools/liferay-portal --source liferay/liferay-portal
 
 	(
-		cd "$LIFERAY/liferay-portal" || exit
+		cd "$LIFERAY/liferay-portal" || exit 1
 		git fetch origin master
 		git fetch devtools master
 		git fetch upstream
@@ -59,7 +59,7 @@ function cmd_sync-ee() {
 	done
 
 	(
-		cd "$LIFERAY/liferay-portal-ee" || exit
+		cd "$LIFERAY/liferay-portal-ee" || exit 1
 		git fetch origin master
 		git fetch upstream
 	)
