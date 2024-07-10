@@ -50,8 +50,6 @@ EE_BRANCHES=(
 	release-2024.q2
 	7.3.x
 )
-# This can be accessed from the command line with "startup sync-ee"
-# shellcheck disable=SC2317
 function cmd_sync-ee() {
 	for branch in "${EE_BRANCHES[@]}"; do
 		gh repo sync drewbrokke/liferay-portal-ee \
