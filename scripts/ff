@@ -36,7 +36,7 @@ FZF_ARGS=(
 	--info="inline"
 	--layout=reverse
 	--no-mouse
-	--preview="bat --color=always {} 2>/dev/null || exa --all --long --header --icons --sort=type '{}'"
+	--preview="bat --color=always {} 2>/dev/null || eza --all --long --header --icons --sort=type '{}'"
 	--preview-window="down:70%"
 	--tiebreak=index
 )
