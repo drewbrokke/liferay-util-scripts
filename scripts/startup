@@ -3,6 +3,8 @@
 STARTUP_COMMANDS=(
 	open
 	sync
+	# sync-ee
+	# connect-to-vpn
 )
 
 function run_command() {
@@ -18,7 +20,7 @@ STARTUP_APPS=(
 	"Brave Browser"
 	"Sublime Merge"
 	# TaskPaper
-	# Things3
+	Things3
 	# SelfControl
 )
 function cmd_open() {
@@ -34,35 +36,41 @@ function cmd_sync() {
 
 	(
 		cd "$LIFERAY/liferay-portal" || exit 1
-		git fetch origin master
-		git fetch devtools master
-		git fetch upstream
-		git fetch brian
-		git fetch
+		git fetch origin master --no-tags
+		git fetch devtools master --no-tags
+		git fetch upstream master --no-tags
+		git fetch brian master --no-tags
 	)
 }
 
 EE_BRANCHES=(
-	master
-	release-2023.q3
-	release-2023.q4
-	release-2024.q1
-	release-2024.q2
+	# master
+	# release-2025.q1
+	# release-2024.q4
+	# release-2024.q3
+	# release-2024.q2
+	# release-2024.q1
+	# release-2023.q4
+	# release-2023.q3
 	7.3.x
+	7.2.x
+	7.1.x
+	7.0.x
 )
 function cmd_sync-ee() {
 	for branch in "${EE_BRANCHES[@]}"; do
 		gh repo sync drewbrokke/liferay-portal-ee \
+			--force \
 			--branch ${branch} \
 			--source liferay/liferay-portal-ee ||
 		echo "Could not sync branch ${branch}"
+
+		(
+			cd "$LIFERAY/liferay-portal-ee" || exit 1
+			git fetch upstream "${branch}" --no-tags
+		)
 	done
 
-	(
-		cd "$LIFERAY/liferay-portal-ee" || exit 1
-		git fetch origin master
-		git fetch upstream
-	)
 }
 
 function cmd_connect-to-vpn() {
