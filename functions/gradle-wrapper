@@ -3,13 +3,31 @@
 function gw() {
 	local dir="."
 
+	# Is it a directory? If so then check for a gradlew file
 	while [[ -d "${dir}" ]]; do
-		if [[ -x "${dir}/gradlew" ]]; then
-			echo "Using Gradle wrapper at $(realpath ${dir})"
+		local gradlewFile="${dir}/gradlew"
 
-			"${dir}/gradlew" "$@"
+		# Is there a gradlew file that is executable? If so then run it
+		if [[ -x "${gradlewFile}" ]]; then
+			echo "Using Gradle wrapper at $(realpath ${gradlewFile})"
+
+			"${gradlewFile}" "$@"
 
 			return
+
+		# Is there a gradlew file at all? If so it should be made executable
+		elif [[ -f ${gradlewFile} ]]; then
+			echo "Gradle wrapper at ${gradlewFile} is NOT EXECUTABLE, please fix with 'chmod 755 ${gradlewFile}'"
+		fi
+
+		# Nothing found, try the parent directory
+		dir="${dir}/.."
+	done
+
+	# No gradlew files found in any parent directories, use global
+	echo "Using global Gradle executable"
+	gradle "$@"
+}
 		fi
 
 		dir="${dir}/.."
