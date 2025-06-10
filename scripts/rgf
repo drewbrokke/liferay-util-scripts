@@ -58,11 +58,17 @@ then
 
 	BASE_DIR="$(git rev-parse --show-prefix)"
 
-	FZF_ARGS+=(--bind="ctrl-o:execute-silent(gh browse -R '${REPO_NAME}' ${BASE_DIR}{1}:{2})")
+	TRACKING_BRANCH="$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | sed 's,^.*/,,g')"
+	if [ -z "${RGF_SECONDARY_EDITOR_COMMAND}" ]
+	then
+		TRACKING_BRANCH="master"
+	fi
+
+	FZF_ARGS+=(--bind="ctrl-o:execute-silent(gh browse -R '${REPO_NAME}' --branch '${TRACKING_BRANCH}' ${BASE_DIR}{1}:{2})")
 	HELP_LINES+=("<Control-o> Open result on Github")
 
 
-	FZF_ARGS+=(--bind="ctrl-y:execute(echo 'Copying link to {1}:{2}...' && gh browse -R '${REPO_NAME}' --no-browser ${BASE_DIR}{1}:{2} | tr -d '\n' | pbcopy)")
+	FZF_ARGS+=(--bind="ctrl-y:execute(echo 'Copying link to {1}:{2}...' && gh browse -R '${REPO_NAME}' --branch '${TRACKING_BRANCH}' --no-browser ${BASE_DIR}{1}:{2} | tr -d '\n' | pbcopy)")
 	HELP_LINES+=("<Control-y> Copy result Github link")
 fi
 
